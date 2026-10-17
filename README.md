@@ -38,6 +38,23 @@ Los resultados persisten en volúmenes (`analytics-data`, `ingest-data`). Para b
 docker compose down -v
 ```
 
+## CI/CD (GitHub Actions)
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) corre en cada push y pull request:
+
+| Job | Qué hace |
+|---|---|
+| Go (ingest, simulator) | `gofmt`, `go vet`, tests con `-race`, build; publica el binario como artefacto |
+| Scala (analytics) | `sbt test assembly`; publica el jar |
+| Prueba end-to-end | [`scripts/e2e.sh`](scripts/e2e.sh): `docker compose up --build` con los 3 simuladores y verifica que las 9 partidas llegan a analytics sin errores; publica los resultados JSON y los logs |
+| Imágenes Docker | Solo en `main`: construye y publica `gamestats-ingest`, `gamestats-simulator` y `gamestats-analytics` en `ghcr.io/mauroza/` con tags `latest` y el SHA corto |
+
+La prueba e2e también corre en local:
+
+```bash
+bash scripts/e2e.sh
+```
+
 ## Ejecutar en local (desarrollo)
 
 ```bash
