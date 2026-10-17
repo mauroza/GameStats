@@ -1,0 +1,51 @@
+# GameStats: analytics (Scala) <- ingest (Go) <- 3 simuladores (Go) en paralelo.
+#   docker compose up --build            # todo, los simuladores corren una vez
+#   docker compose up -d analytics ingest
+#   docker compose run --rm simulator-racing -game racing -matches 5
+# Tablero: http://localhost:9000   ·   Ingest: http://localhost:8080/stats
+
+services:
+  analytics:
+    build: { context: ., dockerfile: analytics/Dockerfile }
+    image: gamestats-analytics
+    ports: ["9000:9000"]
+    volumes: [analytics-data:/data]
+    restart: unless-stopped
+
+  ingest:
+    build: { context: ., dockerfile: ingest/Dockerfile }
+    image: gamestats-ingest
+    ports: ["8080:8080"]
+    environment:
+      ANALYTICS_URL: http://analytics:9000/matches
+      WORKERS: "4"
+      VERBOSE: "false"
+    volumes: [ingest-data:/data]
+    depends_on:
+      analytics: { condition: service_healthy }
+    restart: unless-stopped
+
+  simulator-racing:
+    build: { context: ., dockerfile: simulator/Dockerfile }
+    image: gamestats-simulator
+    command: ["-game", "racing", "-matches", "3", "-interval", "200ms"]
+    depends_on:
+      ingest: { condition: service_healthy }
+
+  simulator-combat:
+    image: gamestats-simulator
+    command: ["-game", "combat", "-matches", "3", "-interval", "150ms"]
+    depends_on:
+      ingest: { condition: service_healthy }
+      simulator-racing: { condition: service_started }
+
+  simulator-football:
+    image: gamestats-simulator
+    command: ["-game", "football", "-matches", "3", "-interval", "100ms"]
+    depends_on:
+      ingest: { condition: service_healthy }
+      simulator-racing: { condition: service_started }
+
+volumes:
+  analytics-data:
+  ingest-data:

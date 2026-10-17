@@ -1,0 +1,12 @@
+.git
+**/bin
+**/data
+**/*.log
+**/*.exe
+analytics/target
+analytics/project/target
+analytics/project/project
+.bsp
+.idea
+.vscode
+docs

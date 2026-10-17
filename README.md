@@ -13,7 +13,32 @@ Proyecto 1 — Lenguajes de Programación, TEC.
 
 Ver [PLAN.md](PLAN.md) para el plan completo.
 
-## Ejecutar en local (temporal)
+## Ejecutar con Docker (recomendado)
+
+Requisitos: Docker Desktop (o Docker Engine + Compose v2).
+
+```bash
+docker compose up --build
+```
+
+Levanta `analytics` (:9000), `ingest` (:8080) y los 3 simuladores en paralelo (racing, combat, football), que envían sus partidas y terminan. Los builds ejecutan los tests de cada módulo.
+
+- Tablero: http://localhost:9000
+- Estado de ingestión: http://localhost:8080/stats
+
+Volver a correr un simulador con otros parámetros:
+
+```bash
+docker compose run --rm simulator-racing -game racing -matches 5 -interval 300ms
+```
+
+Los resultados persisten en volúmenes (`analytics-data`, `ingest-data`). Para borrarlos:
+
+```bash
+docker compose down -v
+```
+
+## Ejecutar en local (desarrollo)
 
 ```bash
 cd ingest && go run .          # :8080
