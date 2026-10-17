@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand/v2"
+	"slices"
 	"sort"
 	"time"
 )
@@ -110,5 +111,11 @@ func addDisconnect(s *script, rng *rand.Rand, players []string, from, to float64
 	s.add(sec(t), "PLAYER_DISCONNECTED", p, map[string]any{"reason": choose(rng, []string{"timeout", "network", "client_crash"})})
 	if rng.Float64() < 0.75 {
 		s.add(sec(t+between(rng, 5, 30)), "PLAYER_RECONNECTED", p, nil)
+		return
 	}
+	// Abandono: el jugador no vuelve, así que se quitan sus eventos posteriores.
+	cut := s.start.Add(sec(t))
+	s.events = slices.DeleteFunc(s.events, func(e Event) bool {
+		return e.PlayerID == p && e.at.After(cut)
+	})
 }

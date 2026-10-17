@@ -17,7 +17,7 @@ Ver [PLAN.md](PLAN.md) para el plan completo.
 
 ```bash
 cd ingest && go run .          # :8080
-cd analytics && sbt run        # :9000
+cd analytics && sbt run        # :9000 (tablero en http://localhost:9000)
 ```
 
 ## Servicio ingest (Go)
@@ -61,6 +61,36 @@ cd simulator && go run . -game football -matches 3 -interval 150ms
 | `-dry-run` | false | imprime los eventos (JSON lines) sin enviarlos |
 
 Escenarios generados para las reglas: remontada en carreras (piloto rápido que choca en la vuelta 1), rachas y clutch en combate, remontada y doble amarilla en fútbol.
+
+## Servicio analytics (Scala)
+
+Recibe cada partida completa desde Go y la analiza con colecciones inmutables y operaciones funcionales (`filter`, `map`, `groupBy`, `groupMapReduce`, `foldLeft`, `scanLeft`, `collect`, composición de predicados).
+
+- `GameAnalyzer` (trait) + registro `Map[gameId, GameAnalyzer]`: un juego nuevo = un objeto nuevo + una línea en el registro. Juegos sin analizador reciben igual las estadísticas genéricas.
+- Combinadores genéricos de patrones: `Patterns.streaks` (rachas en ventana de tiempo) y `Patterns.comebacks` (remontadas sobre series).
+- Resultados en memoria + JSON en `data/results/`.
+
+| Juego | Por jugador | Por partida | Combinada | Patrones |
+|---|---|---|---|---|
+| todos | eventos, tiempo conectado | eventos por tipo, duración, desconexiones | — | ABANDONO |
+| racing | mejor vuelta, promedio, consistencia, posiciones ganadas | ganador, podio, vuelta rápida, adelantamientos | tiempo perdido (penalización + pits + choques) y posición sin incidentes | REMONTADA, PUNTA_A_PUNTA |
+| combat | kills, deaths, K/D, daño, % headshot | marcador por rondas, MVP, arma más usada | daño por baja, bajas por ronda con/sin objeto | RACHA, CLUTCH, ACE |
+| football | % pase, goles, asistencias derivadas, pases clave | marcador, posesión, tiros, tarjetas | conversión, % a puerta, % goles asistidos | REMONTADA, DOBLE_AMARILLA, HAT_TRICK |
+
+| Endpoint | Descripción |
+|---|---|
+| `POST /matches` | Partida completa (lo usa ingest) |
+| `GET /results/matches` · `/results/matches/{id}` | Resumen de partidas · detalle completo |
+| `GET /results/players` · `/results/players/{id}` | Jugadores · perfil agregado por juego |
+| `GET /results/games` · `/results/games/{gameId}` | Resumen por juego con tabla de posiciones |
+| `GET /results/patterns?game=&rule=` | Patrones detectados |
+| `GET /` | Tablero HTML |
+
+Variables de entorno: `PORT` (9000), `DATA_DIR` (data).
+
+```bash
+cd analytics && sbt test
+```
 
 ## Equipo
 

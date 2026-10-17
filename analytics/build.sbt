@@ -4,6 +4,8 @@ ThisBuild / organization := "gamestats"
 lazy val root = (project in file("."))
   .settings(
     name := "analytics",
+    run / fork := true,
+    run / outputStrategy := Some(StdoutOutput),
     libraryDependencies ++= Seq(
       "com.lihaoyi"   %% "cask"    % "0.10.2",
       "com.lihaoyi"   %% "upickle" % "4.1.0",
