@@ -1,0 +1,10 @@
+{
+  "gameId": "combat",
+  "actions": {
+    "DAMAGE_DEALT":       ["targetId", "weapon", "amount", "headshot"],
+    "PLAYER_ELIMINATED":  ["killerId", "victimId", "weapon", "distance"],
+    "ITEM_PICKED":        ["item"],
+    "OBJECTIVE_CAPTURED": ["objectiveId", "team"],
+    "ROUND_END":          ["winnerTeam", "round"]
+  }
+}

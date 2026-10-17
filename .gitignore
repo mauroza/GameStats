@@ -1,0 +1,19 @@
+# Go
+*.exe
+/ingest/bin/
+/simulator/bin/
+# Scala / sbt
+analytics/target/
+analytics/project/target/
+analytics/project/project/
+.bsp/
+.metals/
+.bloop/
+target/
+# Runtime data
+data/
+*.log
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store

@@ -1,0 +1,10 @@
+{
+  "gameId": "racing",
+  "actions": {
+    "LAP_COMPLETED":    ["lap", "lapTimeMs", "position"],
+    "POSITION_CHANGED": ["from", "to", "lap"],
+    "PIT_STOP":         ["lap", "durationMs"],
+    "PENALTY":          ["reason", "secondsAdded"],
+    "CRASH":            ["lap", "severity"]
+  }
+}

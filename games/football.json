@@ -1,0 +1,10 @@
+{
+  "gameId": "football",
+  "actions": {
+    "PASS":         ["toPlayerId", "distance", "success"],
+    "SHOT":         ["onTarget", "distance"],
+    "GOAL":         ["minute"],
+    "FOUL":         ["victimId", "card"],
+    "SUBSTITUTION": ["outId", "inId"]
+  }
+}
