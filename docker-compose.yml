@@ -33,18 +33,18 @@ services:
       ingest: { condition: service_healthy }
 
   simulator-combat:
+    build: { context: ., dockerfile: simulator/Dockerfile }
     image: gamestats-simulator
     command: ["-game", "combat", "-matches", "3", "-interval", "150ms"]
     depends_on:
       ingest: { condition: service_healthy }
-      simulator-racing: { condition: service_started }
 
   simulator-football:
+    build: { context: ., dockerfile: simulator/Dockerfile }
     image: gamestats-simulator
     command: ["-game", "football", "-matches", "3", "-interval", "100ms"]
     depends_on:
       ingest: { condition: service_healthy }
-      simulator-racing: { condition: service_started }
 
 volumes:
   analytics-data:

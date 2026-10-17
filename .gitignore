@@ -17,3 +17,6 @@ data/
 .idea/
 .vscode/
 .DS_Store
+
+# Resultados de la prueba e2e
+e2e-results/
