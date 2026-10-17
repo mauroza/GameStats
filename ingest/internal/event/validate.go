@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/mauroza/gamestats/ingest/internal/games"
@@ -53,17 +54,20 @@ func Validate(e Event, reg games.Registry) error {
 }
 
 func validateGameplay(e Event, reg games.Registry) error {
-	if e.PlayerID == "" {
-		return errors.New("playerId requerido en eventos GAMEPLAY")
-	}
 	cfg, ok := reg[e.GameID]
 	if !ok {
 		// Juego sin configuración: se acepta solo con el sobre común.
+		if e.PlayerID == "" {
+			return errors.New("playerId requerido en eventos GAMEPLAY")
+		}
 		return nil
 	}
 	required, ok := cfg.Actions[e.Action]
 	if !ok {
 		return fmt.Errorf("acción desconocida para %s: %s", e.GameID, e.Action)
+	}
+	if e.PlayerID == "" && !slices.Contains(cfg.NoPlayerActions, e.Action) {
+		return errors.New("playerId requerido para " + e.Action)
 	}
 	var data map[string]json.RawMessage
 	if len(e.Data) > 0 {

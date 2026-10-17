@@ -9,10 +9,12 @@ import (
 	"path/filepath"
 )
 
-// Config describe un juego: acción -> campos obligatorios de data.
+// Config describe un juego: acción -> campos obligatorios de data, y las
+// acciones de juego que no pertenecen a un jugador (ej. ROUND_END).
 type Config struct {
-	GameID  string              `json:"gameId"`
-	Actions map[string][]string `json:"actions"`
+	GameID          string              `json:"gameId"`
+	Actions         map[string][]string `json:"actions"`
+	NoPlayerActions []string            `json:"noPlayerActions,omitempty"`
 }
 
 // Registry contiene las configuraciones indexadas por gameId.

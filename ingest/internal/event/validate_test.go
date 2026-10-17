@@ -11,7 +11,8 @@ import (
 var reg = games.Registry{
 	"racing": {GameID: "racing", Actions: map[string][]string{
 		"LAP_COMPLETED": {"lap", "lapTimeMs", "position"},
-	}},
+		"RACE_FLAG":     {"flag"},
+	}, NoPlayerActions: []string{"RACE_FLAG"}},
 }
 
 func base() Event {
@@ -35,6 +36,9 @@ func TestValidate(t *testing.T) {
 		{"acción desconocida", func(e *Event) { e.Action = "FLY" }, true},
 		{"data incompleta", func(e *Event) { e.Data = json.RawMessage(`{"lap":1}`) }, true},
 		{"gameplay sin jugador", func(e *Event) { e.PlayerID = "" }, true},
+		{"acción sin jugador permitida", func(e *Event) {
+			e.PlayerID, e.Action, e.Data = "", "RACE_FLAG", json.RawMessage(`{"flag":"yellow"}`)
+		}, false},
 		{"juego no registrado", func(e *Event) { e.GameID = "cards"; e.Action = "ANY" }, false},
 		{"sistema MATCH_STARTED", func(e *Event) { e.Type = TypeSystem; e.Action = MatchStarted; e.PlayerID = "" }, false},
 		{"sistema sin jugador", func(e *Event) { e.Type = TypeSystem; e.Action = PlayerJoined; e.PlayerID = "" }, true},

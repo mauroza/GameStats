@@ -6,5 +6,6 @@
     "ITEM_PICKED":        ["item"],
     "OBJECTIVE_CAPTURED": ["objectiveId", "team"],
     "ROUND_END":          ["winnerTeam", "round"]
-  }
+  },
+  "noPlayerActions": ["ROUND_END"]
 }
