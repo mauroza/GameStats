@@ -104,3 +104,47 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.module }}
           cache-to: type=gha,mode=max,scope=${{ matrix.module }}
+
+  # Requiere en el repo: variables DEPLOY_HOST y DEPLOY_USER, secret DEPLOY_SSH_KEY.
+  # Si DEPLOY_HOST no está configurado, el job se omite.
+  deploy:
+    name: Deploy a la VM
+    needs: [images]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_HOST != ''
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    environment:
+      name: production
+      url: http://${{ vars.DEPLOY_HOST }}:9000
+    env:
+      HOST: ${{ vars.DEPLOY_HOST }}
+      USER: ${{ vars.DEPLOY_USER }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Configurar SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
+      - name: Copiar compose de producción
+        run: scp -i ~/.ssh/id_deploy deploy/docker-compose.prod.yml "$USER@$HOST:gamestats/docker-compose.prod.yml"
+      - name: Descargar imágenes y levantar servicios
+        run: |
+          ssh -i ~/.ssh/id_deploy "$USER@$HOST" \
+            "cd gamestats && \
+             echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin && \
+             export IMAGE_TAG=sha-${GITHUB_SHA::7} && \
+             docker compose -f docker-compose.prod.yml pull analytics ingest && \
+             docker compose -f docker-compose.prod.yml up -d --remove-orphans analytics ingest && \
+             docker logout ghcr.io && \
+             docker image prune -f"
+      - name: Verificar que el sistema responde
+        run: |
+          for i in $(seq 30); do
+            curl -fs "http://$HOST:9000/health" && curl -fs "http://$HOST:8080/health" && exit 0
+            sleep 5
+          done
+          echo "El sistema no respondió después del deploy" && exit 1

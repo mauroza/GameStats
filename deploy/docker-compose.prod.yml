@@ -1,0 +1,51 @@
+# GameStats en producción: usa las imágenes publicadas por CI en GHCR.
+# El pipeline copia este archivo a la VM y ejecuta:
+#   IMAGE_TAG=sha-xxxxxxx docker compose -f docker-compose.prod.yml up -d
+# Simuladores (opcional, perfil "demo"):
+#   docker compose -f docker-compose.prod.yml --profile demo up simulator-racing
+
+services:
+  analytics:
+    image: ghcr.io/mauroza/gamestats-analytics:${IMAGE_TAG:-latest}
+    ports: ["9000:9000"]
+    environment:
+      # La VM tiene 1 GB de RAM: limitar el heap de la JVM.
+      JAVA_TOOL_OPTIONS: -Xmx320m -XX:+UseSerialGC
+    volumes: [analytics-data:/data]
+    restart: always
+
+  ingest:
+    image: ghcr.io/mauroza/gamestats-ingest:${IMAGE_TAG:-latest}
+    ports: ["8080:8080"]
+    environment:
+      ANALYTICS_URL: http://analytics:9000/matches
+      WORKERS: "4"
+    volumes: [ingest-data:/data]
+    depends_on:
+      analytics: { condition: service_healthy }
+    restart: always
+
+  simulator-racing:
+    image: ghcr.io/mauroza/gamestats-simulator:${IMAGE_TAG:-latest}
+    profiles: [demo]
+    command: ["-game", "racing", "-matches", "3", "-interval", "300ms"]
+    depends_on:
+      ingest: { condition: service_healthy }
+
+  simulator-combat:
+    image: ghcr.io/mauroza/gamestats-simulator:${IMAGE_TAG:-latest}
+    profiles: [demo]
+    command: ["-game", "combat", "-matches", "3", "-interval", "250ms"]
+    depends_on:
+      ingest: { condition: service_healthy }
+
+  simulator-football:
+    image: ghcr.io/mauroza/gamestats-simulator:${IMAGE_TAG:-latest}
+    profiles: [demo]
+    command: ["-game", "football", "-matches", "3", "-interval", "150ms"]
+    depends_on:
+      ingest: { condition: service_healthy }
+
+volumes:
+  analytics-data:
+  ingest-data:

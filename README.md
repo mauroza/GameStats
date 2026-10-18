@@ -49,11 +49,40 @@ docker compose down -v
 | Prueba end-to-end | [`scripts/e2e.sh`](scripts/e2e.sh): `docker compose up --build` con los 3 simuladores y verifica que las 9 partidas llegan a analytics sin errores; publica los resultados JSON y los logs |
 | Imágenes Docker | Solo en `main`: construye y publica `gamestats-ingest`, `gamestats-simulator` y `gamestats-analytics` en `ghcr.io/mauroza/` con tags `latest` y el SHA corto |
 
+| Deploy | Solo en `main` y si el repo tiene configurado `DEPLOY_HOST`: copia `deploy/docker-compose.prod.yml` a la VM por SSH, descarga las imágenes del commit desde GHCR, reinicia `analytics` e `ingest` y verifica `/health` |
+
 La prueba e2e también corre en local:
 
 ```bash
 bash scripts/e2e.sh
 ```
+
+## Deployment (VM Ubuntu)
+
+Producción corre en una VM Ubuntu 24.04 (Azure for Students, B1s/B2ats v2, 1 GB RAM) con [`deploy/docker-compose.prod.yml`](deploy/docker-compose.prod.yml), que usa las imágenes publicadas en GHCR (no compila en la VM).
+
+**Preparación (una sola vez):**
+
+1. Crear la VM Ubuntu 24.04 (x86_64) con acceso por llave SSH y abrir los puertos 22, 8080 y 9000.
+2. Instalar Docker y swap:
+   ```bash
+   ssh usuario@IP 'bash -s' < deploy/setup-vm.sh
+   ```
+3. Configurar el repositorio en GitHub (Settings → Secrets and variables → Actions):
+   - Variable `DEPLOY_HOST`: IP pública de la VM
+   - Variable `DEPLOY_USER`: usuario SSH
+   - Secret `DEPLOY_SSH_KEY`: llave privada SSH de la VM
+
+A partir de ahí, cada push a `main` que pase los tests se despliega solo.
+
+**Demo con simuladores externos** (desde cualquier computadora, contra la VM):
+
+```bash
+cd simulator && go run . -game racing -matches 3 -target http://IP:8080/events
+```
+
+- Tablero: `http://IP:9000`
+- Ingestión: `http://IP:8080/stats`
 
 ## Ejecutar en local (desarrollo)
 
