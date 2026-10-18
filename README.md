@@ -11,7 +11,13 @@ Proyecto 1 — Lenguajes de Programación, TEC.
 | `games/` | JSON | Configuración de acciones por juego |
 | `docs/` | — | Documentación |
 
-Ver [PLAN.md](PLAN.md) para el plan completo.
+```
+ simulator (Go) x3  ──POST /events──►  ingest (Go :8080)  ──POST /matches──►  analytics (Scala :9000)
+ racing/combat/football                 validar · estado · concurrencia         estadísticas · patrones
+ time.Ticker                                                                     GET /results/... + tablero
+```
+
+Ver [PLAN.md](PLAN.md) para el plan completo y [docs/demo/GUION.md](docs/demo/GUION.md) para el guion de la demo.
 
 ## Ejecutar con Docker (recomendado)
 

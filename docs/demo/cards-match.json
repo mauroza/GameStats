@@ -1,0 +1,10 @@
+[
+  {"eventId": "cards-demo-001", "timestamp": "2026-10-18T20:00:00Z", "gameId": "cards", "gameVersion": "0.1", "matchId": "cards-demo-01", "type": "SYSTEM", "action": "MATCH_STARTED", "data": {"deck": "standard"}},
+  {"eventId": "cards-demo-002", "timestamp": "2026-10-18T20:00:01Z", "gameId": "cards", "matchId": "cards-demo-01", "playerId": "k01", "type": "SYSTEM", "action": "PLAYER_JOINED"},
+  {"eventId": "cards-demo-003", "timestamp": "2026-10-18T20:00:01Z", "gameId": "cards", "matchId": "cards-demo-01", "playerId": "k02", "type": "SYSTEM", "action": "PLAYER_JOINED"},
+  {"eventId": "cards-demo-004", "timestamp": "2026-10-18T20:00:10Z", "gameId": "cards", "matchId": "cards-demo-01", "playerId": "k01", "type": "GAMEPLAY", "action": "CARD_PLAYED", "data": {"card": "dragon", "cost": 5}},
+  {"eventId": "cards-demo-005", "timestamp": "2026-10-18T20:00:20Z", "gameId": "cards", "matchId": "cards-demo-01", "playerId": "k02", "type": "GAMEPLAY", "action": "CARD_PLAYED", "data": {"card": "shield", "cost": 2}},
+  {"eventId": "cards-demo-006", "timestamp": "2026-10-18T20:00:30Z", "gameId": "cards", "matchId": "cards-demo-01", "playerId": "k02", "type": "SYSTEM", "action": "PLAYER_DISCONNECTED", "data": {"reason": "network"}},
+  {"eventId": "cards-demo-007", "timestamp": "2026-10-18T20:00:45Z", "gameId": "cards", "matchId": "cards-demo-01", "playerId": "k01", "type": "GAMEPLAY", "action": "CARD_PLAYED", "data": {"card": "fireball", "cost": 3}},
+  {"eventId": "cards-demo-008", "timestamp": "2026-10-18T20:01:00Z", "gameId": "cards", "matchId": "cards-demo-01", "type": "SYSTEM", "action": "MATCH_FINISHED", "data": {"winner": "k01"}}
+]
