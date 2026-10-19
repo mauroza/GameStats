@@ -54,8 +54,9 @@ docker compose down -v
 | Scala (analytics) | `sbt test assembly`; publica el jar |
 | Prueba end-to-end | [`scripts/e2e.sh`](scripts/e2e.sh): `docker compose up --build` con los 3 simuladores y verifica que las 9 partidas llegan a analytics sin errores; publica los resultados JSON y los logs |
 | Imágenes Docker | Solo en `main`: construye y publica `gamestats-ingest`, `gamestats-simulator` y `gamestats-analytics` en `ghcr.io/mauroza/` con tags `latest` y el SHA corto |
+| Deploy a VM (opcional) | Solo si el repo tiene configurado `DEPLOY_HOST`: despliega en una VM propia por SSH (ver más abajo). Hoy no se usa: producción está en Render |
 
-| Deploy | Solo en `main` y si el repo tiene configurado `DEPLOY_HOST`: copia `deploy/docker-compose.prod.yml` a la VM por SSH, descarga las imágenes del commit desde GHCR, reinicia `analytics` e `ingest` y verifica `/health` |
+**Deploy continuo:** Render está conectado al repositorio y vuelve a construir y desplegar `analytics` e `ingest` en cada push a `main`.
 
 La prueba e2e también corre en local:
 
@@ -63,32 +64,35 @@ La prueba e2e también corre en local:
 bash scripts/e2e.sh
 ```
 
-## Deployment (VM Ubuntu)
+## Deployment (Render)
 
-Producción corre en una VM Ubuntu 24.04 (Azure for Students, B1s/B2ats v2, 1 GB RAM) con [`deploy/docker-compose.prod.yml`](deploy/docker-compose.prod.yml), que usa las imágenes publicadas en GHCR (no compila en la VM).
+Producción corre en [Render](https://render.com) (plan gratis), definido como Blueprint en [`render.yaml`](render.yaml): dos web services Docker que Render construye desde los Dockerfiles del repo.
 
-**Preparación (una sola vez):**
+| Servicio | URL |
+|---|---|
+| Tablero y API de resultados (Scala) | https://gamestats-analytics-nz8a.onrender.com |
+| Ingestión (Go) | https://gamestats-ingest.onrender.com — `/stats`, `/rejected`, `/matches` |
 
-1. Crear la VM Ubuntu 24.04 (x86_64) con acceso por llave SSH y abrir los puertos 22, 8080 y 9000.
-2. Instalar Docker y swap:
-   ```bash
-   ssh usuario@IP 'bash -s' < deploy/setup-vm.sh
-   ```
-3. Configurar el repositorio en GitHub (Settings → Secrets and variables → Actions):
-   - Variable `DEPLOY_HOST`: IP pública de la VM
-   - Variable `DEPLOY_USER`: usuario SSH
-   - Secret `DEPLOY_SSH_KEY`: llave privada SSH de la VM
+- Los servicios gratis de Render no se comunican por red privada: `ingest` envía las partidas a la URL pública de `analytics` (`ANALYTICS_URL`).
+- En el plan gratis los servicios se duermen tras 15 minutos sin tráfico y tardan ~1 minuto en despertar. Antes de una demo, abrir ambas URLs.
+- El disco es efímero: los resultados se reinician cuando Render reinicia el servicio.
 
-A partir de ahí, cada push a `main` que pase los tests se despliega solo.
+**Crear el despliegue desde cero:** en Render, New → Blueprint, conectar GitHub y elegir `mauroza/GameStats`; Render lee `render.yaml` y crea ambos servicios. Si Render asigna a `analytics` una URL distinta, actualizar `ANALYTICS_URL` en `render.yaml`.
 
-**Demo con simuladores externos** (desde cualquier computadora, contra la VM):
+**Demo con simuladores externos** (desde cualquier computadora):
 
 ```bash
-cd simulator && go run . -game racing -matches 3 -target http://IP:8080/events
+cd simulator && go run . -game racing -matches 3 -target https://gamestats-ingest.onrender.com/events
 ```
 
-- Tablero: `http://IP:9000`
-- Ingestión: `http://IP:8080/stats`
+### Alternativa: VM propia con Docker
+
+[`deploy/`](deploy/) permite desplegar en cualquier VM Ubuntu 24.04 con [`deploy/docker-compose.prod.yml`](deploy/docker-compose.prod.yml), que usa las imágenes publicadas en GHCR:
+
+1. Instalar Docker y swap: `ssh usuario@IP 'bash -s' < deploy/setup-vm.sh`
+2. Configurar en GitHub la variable `DEPLOY_HOST` (IP), la variable `DEPLOY_USER` (usuario SSH) y el secret `DEPLOY_SSH_KEY` (llave privada). El job de deploy del pipeline queda activo.
+
+Se intentó primero en Azure for Students, pero la suscripción solo permite 5 regiones y en ellas no hay cuota ni capacidad para VMs pequeñas.
 
 ## Ejecutar en local (desarrollo)
 
