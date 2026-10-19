@@ -1,0 +1,40 @@
+# Despliegue en Render (plan gratis) como Blueprint.
+# Render construye las imágenes desde los Dockerfiles del repo y redepliega en cada push a main.
+# Los servicios gratis no se comunican por red privada, así que ingest llama a analytics
+# por su URL pública. Si Render asigna otra URL a analytics, actualizar ANALYTICS_URL.
+services:
+  - type: web
+    name: gamestats-analytics
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./analytics/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "9000"
+      - key: JAVA_TOOL_OPTIONS
+        value: -Xmx300m -XX:+UseSerialGC
+
+  - type: web
+    name: gamestats-ingest
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./ingest/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: ADDR
+        value: ":8080"
+      - key: PORT
+        value: "8080"
+      - key: ANALYTICS_URL
+        value: https://gamestats-analytics.onrender.com/matches
+      - key: WORKERS
+        value: "4"
+      # analytics gratis se duerme tras 15 min y tarda ~1 min en despertar:
+      # 8 intentos con espera exponencial cubren ese tiempo.
+      - key: SEND_RETRIES
+        value: "8"
